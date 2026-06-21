@@ -6,5 +6,11 @@
   "google": {
     "summary": "Google brand identity — multi-product corporate decks, developer events (Google I/O style), education and training in the Google ecosystem",
     "primary_color": "#4285F4"
+  },
+  "中电联公共元素_轻量版": {
+    "summary": "China Electricity Council lightweight chrome-only preset; locks public page elements while leaving content colors to visual style.",
+    "primary_color": "",
+    "brand_mode": "chrome-only",
+    "color_policy": "visual-style-owned"
   }
 }
