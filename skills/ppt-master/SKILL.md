@@ -57,6 +57,7 @@ description: >
 | `${SKILL_DIR}/scripts/latex_render.py` | LaTeX formula rendering (manifest-driven PNG assets) |
 | `${SKILL_DIR}/scripts/image_gen.py` | AI image generation (multi-provider) |
 | `${SKILL_DIR}/scripts/svg_quality_checker.py` | SVG quality check |
+| `${SKILL_DIR}/scripts/page_content_checker.py` | SVG semantic coverage and density gate |
 | `${SKILL_DIR}/scripts/total_md_split.py` | Speaker notes splitting |
 | `${SKILL_DIR}/scripts/finalize_svg.py` | SVG post-processing (unified entry) |
 | `${SKILL_DIR}/scripts/svg_to_pptx.py` | Export to PPTX |
@@ -184,16 +185,19 @@ Multi-deck: several PPTX files may be imported into one main-pipeline project �
 
 🚧 **GATE**: Step 2 complete; project directory structure is ready.
 
-**Default — free design.** Proceed directly to Step 4. Do NOT query any `*_index.json` unless triggered. Do NOT ask the user. Do NOT proactively suggest, hint at, or fuzzy-match any template based on content, slug-like words, or vague style descriptions.
+> **Repository default brand**: this repository's default brand is `templates/brands/中电联公共元素_轻量版/`. It auto-applies whenever Step 3 would otherwise fall into the "Anything else" row below (bare names, style descriptions, vague intent, or silence) — treat it as if the user had supplied that path. It does NOT apply, and free design proceeds instead, when the user explicitly opts out ("不要用品牌" / "free design" / "无品牌" / "不套用默认 brand") or supplies a different explicit brand/layout/deck path, which is used per the normal rules below (fused or overriding as appropriate).
 
-**Template flow triggers ONLY on explicit directory paths** supplied by the user in their initial message. The trigger rule is mechanical, not interpretive:
+**Default — free design (absent the repository default brand above).** Proceed directly to Step 4. Do NOT query any `*_index.json` unless triggered. Do NOT ask the user. Do NOT proactively suggest, hint at, or fuzzy-match any template based on content, slug-like words, or vague style descriptions.
+
+**Template flow triggers ONLY on explicit directory paths** supplied by the user in their initial message, or on the repository default brand above. The trigger rule is mechanical, not interpretive:
 
 | User input contains | Step 3 action |
 |---|---|
 | One or more explicit template directory paths (each resolves to a directory containing `design_spec.md` with `kind: brand` / `kind: layout` / `kind: deck` in its YAML frontmatter) | Read each spec's `kind`, dispatch per the kind matrix below, fuse if multiple |
-| Anything else — bare template names ("用 academic_defense"), style descriptions ("麦肯锡风格"), brand mentions ("招商银行风格"), vague intent ("想用个模板"), or silence | Skip Step 3, free design |
+| Anything else — bare template names ("用 academic_defense"), style descriptions ("麦肯锡风格"), brand mentions ("招商银行风格"), vague intent ("想用个模板"), or silence — and no explicit opt-out | Apply the repository default brand (`中电联公共元素_轻量版`) as if its path were supplied |
+| Explicit opt-out ("不要用品牌" / "free design" / "无品牌") | Skip Step 3, free design |
 
-There is no slug matching, no name lookup, no fuzzy resolution. A name without a path does not trigger — the user must give a path the AI can `cd` into.
+There is no slug matching, no name lookup, no fuzzy resolution. A name without a path does not trigger — the user must give a path the AI can `cd` into. (This still holds for any brand/layout/deck *other than* the repository default brand noted above, which applies automatically absent an explicit path or opt-out.)
 
 > Style descriptions ("麦肯锡风格" / "Keynote 风" / "极简风" / etc.) never trigger Step 3. They flow into Strategist's Eight Confirmations as a style brief (color / typography / tone in confirmations e–g).
 
@@ -225,7 +229,7 @@ The architecture has three independent reference bundles. Full schema in [`docs/
 
 | User path's `kind` | Step 3 action |
 |---|---|
-| `kind: brand` | `design_spec.md` + non-image assets → `<project>/templates/`; logo / illustration / icon **bitmaps** → `<project>/images/`. Strategist locks identity segment as truth; structure stays free. |
+| `kind: brand` | `design_spec.md` + non-image assets → `<project>/templates/`; logo / illustration / icon **bitmaps** → `<project>/images/`. Strategist locks identity segment as truth; structure stays free. **If the brand's `design_spec.md` frontmatter has `brand_mode: chrome-only`**: also read its `brand_rules.json` and copy `master_elements` + `page_protected_regions` verbatim into the project's `spec_lock.md §master_chrome` (schema: `templates/spec_lock_reference.md §master_chrome`). The native PPTX exporter injects the divider, logo, footer bar, organization name and native `slidenum` field through one shared layout; Executor must reserve the protected bands but must not redraw any public element in body-page SVGs. **If that same `brand_rules.json` also declares `content_regions.cover_title_region` / `cover_meta_region`** (or equivalent named cover/ending placement regions): copy those too into `spec_lock.md §cover_regions` (schema: `templates/spec_lock_reference.md §cover_regions`) — without this, the cover/ending title and metadata placement is free-designed and will not respect the brand's declared layout. |
 | `kind: layout` | `design_spec.md` + SVG roster → `<project>/templates/`; any **bitmap** assets → `<project>/images/`. Strategist locks structure; identity decided in Eight Confirmations e–g. |
 | `kind: deck` | `design_spec.md` + template SVGs → `<project>/templates/`; logos / backgrounds / other **bitmaps** → `<project>/images/`. Strategist locks all segments; Eight Confirmations narrows to deck-content fields (audience / page count / outline / tone tweaks). |
 
@@ -315,6 +319,8 @@ Read references/strategist.md
 **Eight Confirmations** (full template: `templates/design_spec_reference.md`):
 
 ⛔ **BLOCKING**: present the Eight Confirmations as a single bundled recommendation set and **wait for explicit user confirmation or modification** before outputting Design Specification & Content Outline. This is the single core confirmation point — once confirmed, all subsequent steps proceed automatically.
+
+> **Persuasive decks**: between item 3 (audience) and item 4 (style), Strategist also runs `c.5` ([strategist.md](references/strategist.md) §1 c.5) — a Core Thesis confirmation (SCQA → scored soul sentence → MECE-checked supporting arguments) that converges the deck on one defensible stance instead of a topic summary. Gated to decks that argue a position (decision memo, pitch, recommendation); informational/instructional/showcase decks skip it with a one-line reason. Presented inside the same blocking wait as items 1–8, not a second hard stop.
 
 1. Canvas format
 2. Page count range
@@ -505,6 +511,10 @@ python3 ${SKILL_DIR}/scripts/svg_editor/server.py <project_path> --live
 
 **Per-page spec_lock re-read (Mandatory)**: before **each** SVG page, `read_file <project_path>/spec_lock.md` and use only its colors / fonts / icons / images, plus the per-page `page_rhythm` / `page_layouts` / `page_charts` lookups (resolves to template SVGs already loaded in the batch read above). Resists context-compression drift on long decks. See executor-base.md §2.1.
 
+> **If `spec_lock.md` has a `master_chrome` section, reserve its header, logo and footer bands in every body-page SVG but do not draw its elements.** The native exporter injects the shared chrome layout, including its native `slidenum` field. Cover and ending templates remain excluded from that layout because they carry their own locked branding. See executor-base.md §2.1 for the full scope rule.
+
+> **Global cover and ending rule (all projects)**: Cover pages use a main title only — do not add a subtitle or red divider line. Ending pages preserve the selected ending template verbatim — do not add project content, conclusions, action items, organization text, or decorative elements, and do not alter the template style. Put any final takeaway on the preceding body page.
+
 > ⚠️ **Main-agent only**: SVG generation MUST stay in the current main agent — page design depends on full upstream context. Do NOT delegate to sub-agents.
 > ⚠️ **Generation rhythm**: generate pages sequentially, one at a time, in the same continuous context. Do NOT batch (e.g., 5 per group).
 
@@ -513,10 +523,17 @@ python3 ${SKILL_DIR}/scripts/svg_editor/server.py <project_path> --live
 **Quality Check Gate (Mandatory)** — after all SVGs, BEFORE annotation handling and speaker notes:
 ```bash
 python3 ${SKILL_DIR}/scripts/svg_quality_checker.py <project_path>
+python3 ${SKILL_DIR}/scripts/page_content_checker.py <project_path> --require-contract
 ```
-- Any `error` (banned SVG features, viewBox mismatch, spec_lock drift, etc.) MUST be fixed before proceeding — return to Visual Construction, regenerate that page, re-run check.
+- Any `error` (banned SVG features, viewBox mismatch, spec_lock drift, missing semantic contract units, etc.) MUST be fixed before proceeding — return to Visual Construction, regenerate that page, re-run check.
 - `warning` entries (low-res image, non-PPT-safe font tail, etc.): fix when straightforward, otherwise acknowledge and release.
 - Run against `svg_output/` (not after `finalize_svg.py` — finalize rewrites SVG and masks violations).
+
+> **Chrome-only brand gate (conditional)**: if `<project_path>/templates/brand_rules.json` declares `brand_mode: chrome-only` (e.g. the locked brand is `templates/brands/中电联公共元素_轻量版/`), also run:
+> ```bash
+> python3 ${SKILL_DIR}/scripts/verify_chrome_only_brand.py <project_path>
+> ```
+> This is the automated backstop for the shared-layout chrome rule: it fails when an ordinary body-page SVG redraws a `spec_lock.md §master_chrome` element, or when content overlaps a declared `protected_region`. Fix and regenerate the offending page(s) before proceeding, same as a `svg_quality_checker.py` error.
 
 **Logic Construction Phase**: generate speaker notes → `<project_path>/notes/total.md`
 
@@ -526,6 +543,7 @@ python3 ${SKILL_DIR}/scripts/svg_quality_checker.py <project_path>
 - [x] Live preview started and kept available at the reported URL
 - [x] All SVGs generated to svg_output/
 - [x] svg_quality_checker.py passed (0 errors)
+- [x] verify_chrome_only_brand.py passed when brand_mode is chrome-only
 - [x] Speaker notes generated at notes/total.md
 ```
 

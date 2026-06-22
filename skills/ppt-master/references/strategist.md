@@ -50,6 +50,79 @@ Read the user's prose as a point on a spectrum and apply judgment — from *stay
 
 **Consumption — outline-authoring only.** Apply the user's stated intent when authoring the `§IX` outline. Record the prose (or "balanced default") in `design_spec.md §I` (Content Strategy). Do **NOT** write it to `spec_lock.md` — it is baked into `§IX` at authoring time and the Executor never reads it. It carries no page-count coupling — the §b page count stays the user's separate call. The beautify / template-fill workflows keep content verbatim, so they do not surface this field.
 
+### c.5. Core Thesis Confirmation (灵魂句)
+
+🚧 **GATE**: only run when the deck argues a position the audience must act on (decision memo, pitch, recommendation, persuasive report). **Skip this item** for decks that are purely informational/narrative/instructional with no single judgment to converge on (e.g. a tutorial, a showcase, a status briefing with no ask) — state in one line why it was skipped and proceed straight to `d`. When in doubt, ask: "if the audience remembers exactly one sentence from this deck, is there one?" — if the honest answer is no, skip.
+
+**Why this exists**: `c` confirms *what the deck is about* (audience, occasion, core message, divergence). It does not force the material to converge on *a single, scored, defensible judgment*. Without that convergence, `d`'s mode pick (especially `pyramid`) and the §IX page outline tend to produce a well-organized *summary* rather than an argument — informative, but with nothing for the audience to act on. This step is the one place in the pipeline that demands a stance, not a structure.
+
+**Source discipline (apply before drafting SCQA)**: tag every fact pulled into this step by provenance — material the user supplied (highest priority, read in full, never skipped), web search performed to fill a stated gap (cap at 5 queries, record source + publish date), or model background knowledge (must be flagged `[model knowledge — verify]` in `design_spec.md`, never asserted as sourced fact). Numbers carried into the SCQA or the supporting arguments must carry unit + time + source; if a number's source can't be pinned down, mark it `[unverified — confirm before claiming]` rather than dropping the qualifier. This discipline is what later lets §IX cite real evidence instead of plausible-sounding filler.
+
+**Procedure**:
+
+1. **Draft the SCQA quartet** from the source material + confirmed audience/occasion (from `c`):
+
+   | Element | Requirement |
+   |---|---|
+   | **S — Situation** | The status quo the audience already accepts. 1–2 sentences, factual, no judgment yet. |
+   | **C — Complication** | The event/number that breaks the status quo's stability — what makes this urgent *now*, not someday. Prefer a concrete trigger over a vague trend. |
+   | **Q — Question** | The decision the audience must make — not an internal execution question the project team would ask itself. |
+   | **A — Answer** | Your stance: a clear position, backed by a reason, pointing at a concrete action. This is the seed of the thesis. |
+
+   Common failure → fix:
+   - C reads as background, not a rupture → ask: "what concrete event or number turned this from 'a problem' into 'must act now'?"
+   - A is a recap, not a stance ("this report compares three options") → ask: "if the audience remembers one sentence, what should it be?"
+   - Q is a project-team question, not a decision the *audience* (their actual role) must make → reframe one level up.
+
+2. **Draft 2–3 thesis candidates** ("灵魂句" — soul sentence) from A. Each candidate must be one sentence; state a position rather than a topic, question, or option menu; carry at least one stated reason; point at a concrete next action; and remain short enough to repeat accurately. Mark one candidate as the recommendation.
+
+3. **Score internally before presenting** (never show the raw score to the user — present the thesis itself, plus the score's *implication* if it's borderline):
+
+   | Criterion | Weight |
+   |---|---|
+   | Takes a stance (recommend / against / pick X) | 30% |
+   | Carries a stated reason | 25% |
+   | Points at a concrete next action | 25% |
+   | Tight enough to be memorable as one sentence | 20% |
+
+   - ≥70 → include the candidate in the selectable set; the strongest candidate is the recommendation.
+   - 50–69 → include only after one revision pass that names and repairs the weak dimension.
+   - <50 → exclude it; do not present an unsupported stance as a selectable recommendation.
+
+4. **Build the supporting-argument tree** (2–4 points) from the thesis:
+   - Prefer mining the candidate counter-arguments / objections an informed skeptic would raise — each objection the deck must defuse becomes one supporting point.
+   - **MECE check** before locking: any two points arguing the same thing → merge; the set together insufficient to carry the thesis → identify and fill the gap (more source digging, or flag to the user as an accepted hole).
+   - Each supporting point needs ≥1 piece of evidence from the source-discipline pool above (material / web / flagged model knowledge) — a supporting point with zero evidence is a hunch, not an argument; either find evidence or mark it explicitly as an assumption in `design_spec.md`.
+
+5. **Title-only test** (run silently, fix before presenting): if Strategist strung together just the §IX page titles this thesis will produce, would a reader who only read the titles understand why this deck exists, what it claims, and what follows? If the answer is "they'd only know what topics were covered," the titles are topic labels, not argument steps — revise before presenting.
+
+**Present to the user** (this is part of the same ⛔ BLOCKING Eight-Confirmations wait as items a–h — do not add a second hard stop):
+
+```
+Core thesis (choose one or modify one):
+1. "<recommended soul sentence>"
+2. "<alternative soul sentence>"
+3. "<alternative soul sentence>"
+
+This is built on:
+- S: <situation>
+- C: <complication>
+- Q: <decision the audience faces>
+Supporting it: <supporting point 1> / <supporting point 2> / <supporting point 3>
+
+Choose a candidate, or provide a replacement sentence when none reflects your judgment.
+```
+
+If the user supplies their own thesis instead (in full or in part), it is authoritative — re-run only the MECE check and the title-only test against their stance, do not re-derive a new one.
+
+**Confirm UI surface**: when writing `recommendations.json` for the launch in SKILL.md Step 4, write `core_thesis` as `{ "applicable": true, "selected": 0, "candidates": [{"text":"<recommended soul sentence>"}, {"text":"<alternative soul sentence>"}], "scqa": {"s","c","q"}, "supporting_arguments": [{"text","evidence"}, ...] }`, or `{ "applicable": false, "skip_reason": "<one line>" }` when this item was skipped. The page renders it as section "3.5" between audience and style: SCQA and supporting arguments are read-only context; the user selects a candidate or writes a custom replacement. The custom replacement is authoritative. Read the final non-empty value back from `result.json.core_thesis` (absent entirely when skipped). The legacy single `thesis` or `sentence` field remains readable as a one-candidate set. Full schema: [`scripts/docs/confirm_ui.md`](../scripts/docs/confirm_ui.md).
+
+**Output**: write to `design_spec.md §I` as three new rows — **Core Thesis** (the soul sentence), **SCQA** (the quartet, compact), **Supporting Arguments** (the MECE-checked list, each tagged with its evidence source). Not written to `spec_lock.md` — like `content_divergence`, this is consumed once at outline-authoring time (§IX), not re-read per page. See §6.1 for how §IX must trace back to it.
+
+**Hard rule — once confirmed, the thesis does not get re-derived downstream.** `d`'s mode pick, `§IX`'s page sequence, and the Cover/Closing impact lines all serve this thesis; they may change *how* it's expressed, never *what* it claims. If a later step finds the thesis doesn't fit the content after all, stop and re-open this confirmation explicitly — don't silently drift the argument while leaving the recorded thesis stale.
+
+---
+
 ### d. Style Objective Confirmation
 
 Two independent layers, each locks one catalog item. Output: `d. Mode: <mode> + Visual style: <visual_style>`.
@@ -67,6 +140,7 @@ The deck's **narrative + persuasion skeleton** — how the argument is organized
 - Beautify / re-layout workflow ([`beautify-pptx.md`](../workflows/beautify-pptx.md)) → the extracted source content is authoritative and **verbatim**, one step stricter than the user-outline case above. Each source slide becomes exactly one `§IX` page in source order; transcribe every content block word-for-word — never reshape / re-primary / condense / merge / split / reword. Lock `mode: briefing`; color (e) and typography (g) are whatever the user confirmed in the beautify plan — the source identity (theme or observed) by default, or a content / brand-aware alternative the beautify plan offered and the user picked — locked as truth (the beautify plan already ran the recommendation through the confirm UI, so do not re-recommend here). Charts / tables / images are regenerated from their extracted data in the inherited style (route chart/table data to §VII, pictures to §VIII) — data values stay frozen, the rendering is the deck's own; never carried over verbatim. Layout, hierarchy, rhythm, and visual rendering are what gets redesigned.
 - A bespoke direction the five don't give — a nameable cadence (dialectic 正反合, myth-vs-reality, countdown, Socratic), a multi-act fusion of modes, or the user's own feel (confrontational here, detached there). Either the user asks, **or you recommend it** when a fusion / bespoke direction genuinely serves the deck better than a single preset (a recommendation the user confirms, like every lock). The *kind* doesn't matter → `mode: custom` + a `mode_behavior:` paragraph that **crystallizes the intent** (act sequence or posture shifts, title voice, page rhythm, register) concretely enough for the Executor to follow per page; it reads only `spec_lock.md`, never the chat. One deck locks **one** value — a fusion is one `custom` describing the acts, never several modes. Avoid only the *dodge*: don't default to `custom` when a preset genuinely fits, and prefer a dominant mode + page-level variation when one mode leads.
 - No user structure or cadence → recommend by the index's auto-selection table (content / audience signal → mode) plus the deck's stated purpose; the mode does the structural lifting. Present as a recommendation; the user may override.
+- **`c.5` ran (a locked `core_thesis` + 2–4 MECE-checked supporting arguments exists)** → this structure *is* a content/audience signal, and it points specifically at `pyramid`: one scored thesis + a small set of supporting branches is exactly pyramid's shape. Default to `pyramid` unless the deck's stated purpose pulls harder toward another preset (e.g. a strong chronological/dialectic shape the source itself dictates) — in that case still keep the locked thesis as the spine the alternate mode must resolve toward, and say so explicitly in the recommendation (e.g. "narrative mode, but each act closes by reinforcing one of the locked supporting arguments"). Do not pick a mode that has no path back to the thesis (e.g. `showcase` with no resolving claim) without flagging the tension to the user first.
 
 Write the locked value to `spec_lock.md` `- mode:` and record the rationale in `design_spec.md` (for `custom`, also write the sibling `- mode_behavior:` paragraph). Executor loads only that one mode file, or follows `mode_behavior` when the value is `custom`.
 
@@ -738,6 +812,8 @@ Content-outline and speaker-notes strategy follow the deck's locked **mode** —
 
 > Note: §IX is the only content copy the Executor re-reads after context compression — what you write there is what survives.
 
+**Thesis traceback (only when `c.5` ran)**: every content page's `Core message` must be traceable to one of the locked Supporting Arguments — either restating it, evidencing it, or advancing it toward the thesis's stated action. Before finalizing §IX, run the same title-only test from `c.5` step 5 against the *actual* page titles (not the draft ones): read them in sequence with no body content — a reader should come away knowing why this deck exists, what it claims, and what to do next. A page whose `Core message` doesn't serve any locked supporting argument is either redundant (cut it, or move it to an appendix) or signals a gap in the argument tree that `c.5` missed — fix the argument tree, don't just keep the orphan page. This check does not apply to `beautify` / `template-fill` (content is verbatim) or to decks that skipped `c.5`.
+
 ### 6.2 Outline Output Specification (Must include 11 chapters)
 
 | Chapter | Content Requirements |
@@ -759,11 +835,12 @@ Content-outline and speaker-notes strategy follow the deck's locked **mode** —
 2. Generate complete spec from scratch based on analysis
 3. Save to: `projects/<project_name>.../design_spec.md`
 4. **Generate execution lock**: read `templates/spec_lock_reference.md` and produce `projects/<project_name>.../spec_lock.md` — a distilled, machine-readable short form of the color / typography / icon / image / **page_rhythm** / **page_layouts** / **page_charts** decisions above. This file is what the Executor re-reads before every page (see [executor-base.md](executor-base.md) §2.1). The values in `spec_lock.md` MUST exactly match the decisions recorded in `design_spec.md`; if they ever diverge, `spec_lock.md` wins and `design_spec.md` should be treated as historical narrative.
+   - **Page content contract is mandatory**: write `analysis/page_contract.json` following [`content-quality-gate.md`](content-quality-gate.md). Every §IX page must declare its claim, required semantic units, and required relations. This contract turns the outline into an export gate.
    - **page_rhythm is mandatory**: Based on the page list in §IX Content Outline, assign each page one of `anchor` / `dense` / `breathing` (see `spec_lock_reference.md` for the full vocabulary). This is what breaks the uniform "every page is a card grid" feel — without it the Executor defaults all pages to `dense`.
    - **Rhythm follows narrative, not quota**: `breathing` pages mark natural pauses — chapter transitions, standalone emphasis (hero quote / big number), SCQA bridges. Dense decks may legitimately be all `dense`. **Do NOT invent filler pages** ("Thank you", empty dividers) to pad rhythm — every `breathing` page must say something independent.
-   - **Cover impact is mandatory**: Page `P01` is the deck's first visual contract, not a generic title slide. In `design_spec.md §IX`, add a `Cover impact` line for `P01` that names one concrete hook and one concrete composition strategy. Use the source's strongest available signal: a provocative core claim, object / scene metaphor, hero number, founder / product / audience moment, or a distilled conflict. Pair it with one concrete composition strategy — such as `full-bleed image + floating title`, `typographic poster`, `hero object`, `data hook`, `editorial scene`, `high-contrast abstract geometry`, or a fresh composition the deck's subject suggests (these are starting points, not the allowed set). If no external or AI image is available, still specify a native-SVG visual hook; do not fall back to "title + subtitle + decorative background". (Beautify / template-fill keep the source cover verbatim — this rule does not apply on those preservation paths.)
+   - **Cover impact is mandatory**: Page `P01` is the deck's first visual contract, not a generic title slide. In `design_spec.md §IX`, add a `Cover impact` line for `P01` that names one concrete hook and one concrete composition strategy. **When `c.5` ran, the hook is the locked `core_thesis` (or its `C — Complication`) — do not source the hook from elsewhere and end up with a cover claim that doesn't match the deck's actual argument.** When `c.5` was skipped, use the source's strongest available signal instead: an object / scene metaphor, hero number, founder / product / audience moment, or a distilled conflict. Pair it with one concrete composition strategy — such as `full-bleed image + floating title`, `typographic poster`, `hero object`, `data hook`, `editorial scene`, `high-contrast abstract geometry`, or a fresh composition the deck's subject suggests (these are starting points, not the allowed set). If no external or AI image is available, still specify a native-SVG visual hook. **Global cover rule**: use one main title only; do not write a subtitle or add a red divider line. (Beautify / template-fill keep the source cover verbatim — this rule does not apply on those preservation paths.) **When the locked brand declares `spec_lock.md §cover_regions`** (chrome-only brands with a dedicated cover template), the composition strategy must fit inside `title_region` / `meta_region` — pick a hook that *works* within that box rather than one that assumes free placement; see `executor-base.md §2.1 cover_regions` for the placement rule Executor enforces.
    - **Cover rhythm lock**: `P01` remains `anchor` in `spec_lock.md page_rhythm`, but its §IX `Cover impact` must prevent content-page patterns. Do not plan multi-card grids, agenda-like bullets, or equal-weight columns on the cover unless a template explicitly requires that structure, or a preservation path (beautify / template-fill) is transcribing the source cover verbatim.
-   - **Closing impact (only when the deck closes)**: the deck's last page is its final visual contract — the strongest impression after the cover. When the deck genuinely lands on a conclusion / call-to-action / final-takeaway page, give it a `Closing impact` line in §IX: name the one thing the audience should leave with (a distilled takeaway, a forward call, a memorable restatement of the core claim) + one composition that delivers it — never a generic "Thank you" / contact-only slide or a centered-title reprise of the cover. **Do NOT invent a closing page to satisfy this** — the filler-page ban above still holds; apply it only to the page where the deck actually resolves. Same exemptions as the cover: skip on template / beautify / template-fill preservation paths.
+   - **Closing page rule**: the final page is a template-preserved formal sign-off with no project content, conclusion, call-to-action, unit information, or style change. Place any final takeaway on the preceding body page. **Do NOT invent a closing page to satisfy this** — the filler-page ban still holds; when an ending page exists, its `§IX` content is `None` and its layout is the selected ending template. Beautify / template-fill preservation paths keep the source ending verbatim.
    - **page_layouts (write only when a template is in use)**: For each page that inherits a template SVG, add `P<NN>: <svg_basename>` (e.g., `P04: 03a_content_image_text`). Pages designed freely get **no entry** — Executor reads the absence as "free design, no inheritance". If zero pages use a template, omit the section entirely.
    - **page_charts (write only for chart pages that match a catalog template)**: For each page in `design_spec.md §VII` whose `reference template path` points to `templates/charts/<name>.svg`, add `P<NN>: <chart_name>`. Pages with `no-template-match` in §VII MUST NOT appear here (Executor would look for a non-existent reference). If the deck has no data-visualization pages, omit the section.
    - **Hard rule**: Use both `page_layouts` and `page_charts` for the same page only when the layout template is a compatible shell for the chart. Do not pair chart pages with conflicting page layouts (e.g., `waterfall_chart` + timeline layout, KPI cards + circle-diagram layout). If no compatible layout exists, omit the page from `page_layouts`.

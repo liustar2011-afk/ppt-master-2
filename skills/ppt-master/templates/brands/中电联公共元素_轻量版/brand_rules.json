@@ -80,6 +80,13 @@
       "height": 554,
       "description": "Recommended body content region. Content may use the title area above it only for page title and subtitle."
     },
+    "body_header_region": {
+      "x": 58,
+      "y": 16,
+      "width": 970,
+      "height": 62,
+      "description": "Body-page title and subtitle region above the red divider. Keep clear of the top-right logo protection area; body content starts below the divider."
+    },
     "cover_title_region": {
       "x": 260,
       "y": 150,

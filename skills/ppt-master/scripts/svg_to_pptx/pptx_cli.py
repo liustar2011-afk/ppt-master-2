@@ -537,9 +537,24 @@ Recorded narration:
             else:
                 print("  [warn] metadata.json ignored (top level is not an object)", file=sys.stderr)
 
+    from .master_chrome import read_master_chrome
+    master_chrome = read_master_chrome(project_path)
+    logo_src = None
+    if master_chrome:
+        for candidate in (project_path / 'images').glob('*logo*'):
+            if candidate.is_file():
+                logo_src = candidate
+                break
+        if verbose:
+            n_excluded = len(master_chrome.get('excluded_pages', set()))
+            print(f"  Brand chrome: master_chrome locked, {n_excluded} page(s) excluded "
+                  f"(cover/ending templates), injected via slide layout (not per-page SVG)")
+
     shared_kwargs = dict(
         canvas_format=canvas_format,
         doc_metadata=doc_metadata,
+        master_chrome=master_chrome,
+        logo_src=logo_src,
         verbose=verbose,
         transition=transition,
         transition_duration=transition_duration,

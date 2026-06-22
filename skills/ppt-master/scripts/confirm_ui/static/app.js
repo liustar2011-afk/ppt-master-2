@@ -34,6 +34,16 @@
             sub_visual: "Visual style",
             sub_divergence: "Material divergence (how freely to reshape vs. stay close to the source)",
             placeholder_divergence: "In your words — e.g. \"stick closely to the document\" / \"freely restructure and expand within the source\". Leave blank for a balanced default.",
+            sec_thesis: "Core thesis",
+            thesis_skipped_prefix: "Skipped — ",
+            thesis_scqa_label: "Built on (SCQA)",
+            thesis_supporting_label: "Supporting arguments",
+            thesis_candidates_label: "Choose a thesis",
+            thesis_custom: "Write a custom thesis",
+            thesis_custom_placeholder: "Write one complete thesis sentence…",
+            thesis_required: "Choose a thesis or write a non-empty custom thesis before confirming.",
+            placeholder_thesis: "One sentence: a stance, with a reason, pointing at a concrete action.",
+            thesis_edit_hint: "Choose a candidate first. Use the custom option only when your judgment needs a different sentence.",
             custom: "Custom",
             custom_placeholder: "Type your own…",
             recommended: "Recommended",
@@ -104,6 +114,16 @@
             sub_visual: "视觉风格",
             sub_divergence: "材料发散度（多大程度重塑，还是贴近源材料）",
             placeholder_divergence: "用你自己的话写，例如「严格贴着文档来」/「在源材料范围内自由重组并展开」。留空则按平衡处理。",
+            sec_thesis: "核心论点（灵魂句）",
+            thesis_skipped_prefix: "已跳过 —— ",
+            thesis_scqa_label: "推导依据（SCQA）",
+            thesis_supporting_label: "支撑论点",
+            thesis_candidates_label: "选择核心论点",
+            thesis_custom: "自定义核心论点",
+            thesis_custom_placeholder: "请输入一条完整的核心论点句…",
+            thesis_required: "请选择一条核心论点，或填写非空的自定义核心论点后再确认。",
+            placeholder_thesis: "一句话：有立场、有理由、指向一个具体行动。",
+            thesis_edit_hint: "先选择候选句；只有需要表达不同判断时，再使用自定义输入。",
             custom: "自定义",
             custom_placeholder: "输入自定义内容…",
             recommended: "推荐",
@@ -521,6 +541,123 @@
         textField(subDiv, function () { return STATE.content_divergence; },
             function (v) { STATE.content_divergence = v; }, "placeholder_divergence", false);
         sec.appendChild(subDiv);
+        host.appendChild(sec);
+    }
+
+    function coreThesisCandidates(rec) {
+        var raw = rec.candidates || rec.options || [];
+        var result = raw.map(function (item) {
+            if (typeof item === "string") return { text: item };
+            return Object.assign({}, item, { text: (item && (item.text || item.value || item.thesis || item.sentence)) || "" });
+        }).filter(function (item) { return String(item.text || "").trim(); });
+        // Existing recommendation files use one of these single-value fields.
+        // Preserve them as a one-item choice rather than rendering an empty form.
+        if (!result.length) {
+            var legacy = rec.thesis || rec.sentence || "";
+            if (String(legacy).trim()) result.push({ text: legacy });
+        }
+        return result;
+    }
+
+    function coreThesisSelectedIndex(rec, candidates) {
+        var idx = parseInt(rec.selected, 10);
+        if (isNaN(idx) || idx < 0 || idx >= candidates.length) idx = 0;
+        return idx;
+    }
+
+    // Core Thesis (strategist.md §1 c.5) — sits between audience (3) and style
+    // (4), hence section "3.5". SCQA and supporting arguments remain read-only;
+    // the user selects one Strategist-authored thesis or writes a custom one.
+    // result.json continues to carry only the final thesis string.
+    function renderCoreThesis(host) {
+        var rec = (REC && REC.core_thesis) || {};
+        if (rec.applicable === false) {
+            var skipSec = section("3.5", "sec_thesis");
+            skipSec.appendChild(el("div", "toggle-desc", t("thesis_skipped_prefix") + (rec.skip_reason || "")));
+            host.appendChild(skipSec);
+            return;
+        }
+        var sec = section("3.5", "sec_thesis");
+        if (rec.scqa) {
+            var ctx = el("div", "subfield");
+            ctx.appendChild(el("div", "subfield-label", t("thesis_scqa_label")));
+            ["s", "c", "q"].forEach(function (k) {
+                var v = rec.scqa[k];
+                if (!v) return;
+                ctx.appendChild(el("div", "color-note", k.toUpperCase() + ": " + v));
+            });
+            sec.appendChild(ctx);
+        }
+        var candidates = coreThesisCandidates(rec);
+        var thesisField = el("div", "subfield");
+        thesisField.appendChild(el("div", "subfield-label", t("thesis_candidates_label")));
+        var grid = el("div", "font-grid");
+        var customInput = el("textarea", "text-input core-thesis-custom-input");
+        customInput.rows = 2;
+        customInput.placeholder = t("thesis_custom_placeholder");
+        customInput.style.display = "none";
+        var selectedIdx = -1;
+        var cards = [];
+
+        function refreshSelection() {
+            cards.forEach(function (card, idx) { card.classList.toggle("selected", idx === selectedIdx); });
+        }
+        function selectCandidate(idx) {
+            selectedIdx = idx;
+            STATE.core_thesis = candidates[idx].text;
+            customInput.style.display = "none";
+            refreshSelection();
+        }
+        function selectCustom() {
+            selectedIdx = -1;
+            STATE.core_thesis = customInput.value;
+            customInput.style.display = "block";
+            refreshSelection();
+            customCard.classList.add("selected");
+            customInput.focus();
+        }
+
+        candidates.forEach(function (candidate, idx) {
+            var card = el("div", "font-card");
+            card.appendChild(el("div", "font-card-name", candidate.text));
+            var note = localized(candidate, "note");
+            if (note) card.appendChild(el("div", "color-note", note));
+            card.addEventListener("click", function () { selectCandidate(idx); });
+            cards.push(card);
+            grid.appendChild(card);
+        });
+        var customCard = el("div", "font-card font-card-custom");
+        customCard.appendChild(el("div", "font-card-name", t("thesis_custom")));
+        customCard.addEventListener("click", selectCustom);
+        cards.push(customCard);
+        grid.appendChild(customCard);
+        thesisField.appendChild(grid);
+        customInput.addEventListener("input", function () {
+            if (selectedIdx !== -1) selectCustom();
+            STATE.core_thesis = customInput.value;
+        });
+        thesisField.appendChild(customInput);
+        thesisField.appendChild(el("div", "color-note", t("thesis_edit_hint")));
+        sec.appendChild(thesisField);
+        if (STATE.core_thesis) {
+            candidates.forEach(function (candidate, idx) {
+                if (candidate.text === STATE.core_thesis) selectedIdx = idx;
+            });
+        }
+        if (selectedIdx >= 0) selectCandidate(selectedIdx);
+        else if (candidates.length) selectCandidate(coreThesisSelectedIndex(rec, candidates));
+        else selectCustom();
+        var args = rec.supporting_arguments || [];
+        if (args.length) {
+            var supp = el("div", "subfield");
+            supp.appendChild(el("div", "subfield-label", t("thesis_supporting_label")));
+            args.forEach(function (item) {
+                var text = (item && (item.text || item.value)) || (typeof item === "string" ? item : "");
+                var evidence = (item && item.evidence) || "";
+                supp.appendChild(el("div", "color-note", "· " + text + (evidence ? "  [" + evidence + "]" : "")));
+            });
+            sec.appendChild(supp);
+        }
         host.appendChild(sec);
     }
 
@@ -1030,6 +1167,7 @@
         renderCanvas(host);
         renderPages(host);
         renderAudience(host);
+        renderCoreThesis(host);
         renderStyle(host);
         // Group the preview with the three sections it reflects so its sticky
         // scope ends when typography scrolls past — it does not linger over the
@@ -1060,6 +1198,13 @@
         STATE.page_count = (REC.page_count && REC.page_count.value != null) ? String(REC.page_count.value) : "";
         STATE.audience = (REC.audience && REC.audience.value) || "";
         STATE.content_divergence = (REC.content_divergence && REC.content_divergence.value) || "";  // free text; blank = balanced default
+        // core_thesis: editable echo of the c.5 recommendation; omitted from
+        // payload entirely when c.5 was skipped (nothing to confirm/override).
+        if (REC.core_thesis && REC.core_thesis.applicable !== false) {
+            var thesisCandidates = coreThesisCandidates(REC.core_thesis);
+            var thesisIdx = coreThesisSelectedIndex(REC.core_thesis, thesisCandidates);
+            STATE.core_thesis = (thesisCandidates[thesisIdx] && thesisCandidates[thesisIdx].text) || "";
+        }
         STATE.mode = pick("mode", CAT.modes);
         STATE.visual_style = pick("visual_style", CAT.visual_styles);
 
@@ -1099,6 +1244,12 @@
     function confirm() {
         var btn = document.getElementById("btn-confirm");
         var payload = Object.assign({}, STATE);
+        if (REC.core_thesis && REC.core_thesis.applicable !== false && !String(payload.core_thesis || "").trim()) {
+            document.getElementById("confirm-status").textContent = t("thesis_required");
+            var customThesisInput = document.querySelector(".core-thesis-custom-input");
+            if (customThesisInput && customThesisInput.style.display !== "none") customThesisInput.focus();
+            return;
+        }
         var customImagePlan = usesCustomImagePlanValue(payload.image_usage);
         if (payload.image_usage === "custom" || (customImagePlan && !String(payload.image_usage).trim())) {
             document.getElementById("confirm-status").textContent = t("image_usage_custom_required");

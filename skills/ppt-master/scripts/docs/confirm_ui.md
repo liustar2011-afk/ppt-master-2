@@ -32,6 +32,7 @@ pip install flask
 - **Enumerable + custom** — canvas / mode / visual_style / icons / image usage. The page lists common options from `static/catalogs.json`, badges the AI's recommendation, and still offers a Custom box for edge cases (custom canvas size, bespoke narrative mode, mixed image plan, self-provided icon system, etc.). `visual_style` additionally honors an optional `visual_style_spectrum` that badges a 3-pick personality spectrum (safe / shifted / bold, each with a temperament tag + analogy) in place of the single recommendation — see the schema below.
 - **Closed enumerable** — formula policy / generation mode / refine spec, plus AI source only when image usage may include `ai`. These have no Custom box; out-of-catalog values snap back to the recommended option. Use pipeline vocabulary: icon ids are actual library ids such as `tabler-outline`, or `emoji` for system emoji; image usage labels mirror Strategist terminology: `ai` = AI-generated, `web` = Web-sourced, `provided` = User-provided, `placeholder` = Placeholder, `none` = No images. Use custom prose only when several sources are mixed.
 - **Generative (open)** — color, typography, generated-image style. No finite catalog; the AI authors **≥3 candidates** the page renders as cards (never a single option — creative fields must offer real choice; fewer than 3 only on the honest-shortfall exception). `page_count`, `audience`, and `content_divergence` are free inputs (`content_divergence` is a free-text intent shown under audience in §c, not a fixed-option field).
+- **Core thesis (`c.5`, conditional)** — section "3.5", between audience (3) and style (4). The page shows SCQA and supporting arguments as read-only context, then presents 2–3 Strategist-authored thesis candidates with one recommended by default. The user selects a candidate or activates a custom text field; confirmation rejects an empty thesis. `result.json` remains a single final thesis string. When `core_thesis.applicable` is `false` (deck doesn't argue a position — informational/instructional/showcase), the section renders a one-line skip note (`skip_reason`) instead of the field, and `result.json` carries no `core_thesis` key at all.
 
 **Custom box** appears only on fields whose universe is genuinely open — `canvas`, `mode`, `visual_style`, `icons`, and `image_usage`. Fully closed sets — `image_ai_path`, `formula_policy`, `generation_mode`, `refine_spec` — have **no** Custom box; an out-of-catalog value there is snapped back to the recommended option.
 
@@ -62,6 +63,20 @@ Both files live under `<project_path>/confirm_ui/`.
   "page_count":         { "value": "12-15" },
   "audience":           { "value": "..." },
   "content_divergence": { "value": "" },
+  "core_thesis": {
+    "applicable": true,
+    "selected": 0,
+    "candidates": [
+      { "text": "<recommended soul sentence>" },
+      { "text": "<alternative soul sentence>" }
+    ],
+    "scqa": { "s": "...", "c": "...", "q": "..." },
+    "supporting_arguments": [
+      { "text": "...", "evidence": "material" },
+      { "text": "...", "evidence": "web: <source>, <date>" },
+      { "text": "...", "evidence": "[model knowledge — verify]" }
+    ]
+  },
   "color": {
     "selected": 0,
     "candidates": [
@@ -120,6 +135,7 @@ Both files live under `<project_path>/confirm_ui/`.
 - **`visual_style_spectrum`** (optional) lets the AI surface the deck's aesthetic as a **personality spectrum** instead of one badged style. Each entry is `{ "id", "tag_zh"/"tag_en", "note_zh"/"note_en" }` where `id` is a real `visual_styles` catalog id; the page badges those chips with their temperament `tag` (replacing the single ★) and appends the `note` (a real-world analogy) inline. The full grouped style list and Custom box stay visible below, and `recommend.visual_style` is still the pre-selected default (it should equal the spectrum's safe pick). Author **≥3** spanning safe / shifted / bold (mirrors h.5; honest-shortfall exception applies — fewer only when the constraints genuinely cannot yield 3). The user's pick still writes back to `result.json.visual_style` as a plain id; the spectrum is presentation-only. Omit the field to fall back to the single-recommendation badge.
 - `recommend.generation_mode` and `refine_spec` mirror the two mandatory notes in SKILL.md Step 4. Confirmed `generation_mode: "split"` / `refine_spec: true` are explicit user choices, equivalent to opting in through chat.
 - `content_divergence` is a **free-text** field shown right under the audience box in §c — the user states in their own words how closely to follow the source vs how freely to reshape it (e.g. "stick closely to the document" / "freely restructure and expand within the source"). It is **not** a fixed-option field; blank means a balanced default. Whatever the level, facts stay sourced — reshaping develops what is in the source, never imports facts from outside it. The Strategist consumes the prose when authoring the §IX outline and records it in `design_spec.md §I`; it is **not** written to `spec_lock.md` (the Executor never reads it). It carries no page-count coupling and no source-signal recommendation — it is purely the user's stated intent. Beautify / template-fill keep content verbatim and do not surface this field.
+- `core_thesis` (from `strategist.md` §1 c.5) follows the gated/conditional pattern: when `applicable: false`, the page shows only `skip_reason` and `result.json` carries no `core_thesis` key. When applicable, `scqa` and `supporting_arguments` are presentation-only context; `candidates` provides 2–3 selectable sentences and `selected` identifies the recommended zero-based index. The user may enter a custom replacement, which is authoritative. The page rejects confirmation when no non-empty thesis is selected or entered. For compatibility, legacy `thesis` or `sentence` fields are rendered as a one-candidate set. Like `content_divergence`, the final value is consumed once at §IX-authoring time and is **not** written to `spec_lock.md`.
 - `lang` is a soft default; an explicit user language choice in the page (persisted to `localStorage`) wins.
 
 ### Output — `result.json` (written on submit, read by the AI)
@@ -130,6 +146,7 @@ Both files live under `<project_path>/confirm_ui/`.
   "page_count": "12-15",
   "audience": "...",
   "content_divergence": "freely restructure and expand within the source",
+  "core_thesis": "<confirmed or user-edited soul sentence>",
   "mode": "pyramid",
   "visual_style": "swiss-minimal",
   "color": { "name": "...", "palette": { "background": "#...", "secondary_bg": "#...", "primary": "#...", "accent": "#...", "secondary_accent": "#...", "body_text": "#..." } },

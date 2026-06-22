@@ -15,6 +15,9 @@
 | **Target Audience** | [Filled by Strategist] |
 | **Use Case** | [Filled by Strategist] |
 | **Content Strategy** | [Material divergence — the user's free-text intent on how closely to follow the source vs how freely to reshape it (or "balanced default"); facts stay sourced however free. Confirmed at c; consumed when authoring §IX. Not in spec_lock.] |
+| **Core Thesis** | [The confirmed soul sentence from c.5 — one stance sentence with a reason and a pointed action. "N/A — skipped" if c.5 didn't run for this deck.] |
+| **SCQA** | [The quartet behind the Core Thesis: S situation / C complication / Q decision question / A answer. Compact, 1–2 lines each. Omit if c.5 skipped.] |
+| **Supporting Arguments** | [The MECE-checked 2–4 point argument tree from c.5, each tagged with its evidence source (material / web / `[model knowledge — verify]`). §IX page Core messages must trace back to these. Omit if c.5 skipped.] |
 | **Created Date** | {date_str} |
 
 ---
@@ -301,10 +304,10 @@ Catalog read: 71 templates
 
 #### Slide 01 - Cover
 
-- **Cover impact**: [MANDATORY — see strategist.md §6.2. Name one concrete hook (provocative core claim / hero number / object-scene metaphor / founder-product-audience moment / distilled conflict) + one composition strategy (full-bleed image + floating title / typographic poster / hero object / data hook / editorial scene / high-contrast abstract geometry / or a fresh one the subject suggests). This is the cover's spine — do NOT fall back to "title + subtitle + decorative background".]
+- **Cover impact**: [MANDATORY — see strategist.md §6.2. Name one concrete hook (provocative core claim / hero number / object-scene metaphor / founder-product-audience moment / distilled conflict) + one composition strategy (full-bleed image + floating title / typographic poster / hero object / data hook / editorial scene / high-contrast abstract geometry / or a fresh one the subject suggests). This is the cover's spine — title-only, with no subtitle or red divider line.]
 - **Layout**: [realize the Cover impact above; choose the composition that delivers it — not a default centered title block]
 - **Title**: [Main title]
-- **Subtitle**: [Subtitle]
+- **Subtitle**: N/A — global title-only cover rule
 - **Info**: [Author / Date / Organization]
 
 #### Slide 02 - [Page Name]
@@ -326,11 +329,11 @@ Catalog read: 71 templates
 
 ---
 
-#### Slide NN - Closing  *(only if the deck genuinely lands on a conclusion / CTA / final-takeaway page — do NOT invent one to fill this slot; see strategist.md §6.2)*
+#### Slide NN - Closing  *(template-only formal ending; place any conclusion / CTA / final takeaway on the preceding body page)*
 
-- **Closing impact**: [MANDATORY for the closing page — name the one thing the audience leaves with (distilled takeaway / forward call / memorable restatement of the core claim) + one composition that lands it. Do NOT write a generic "Thank you" / contact-only / centered-title reprise of the cover.]
-- **Layout**: [realize the Closing impact above — the deck's final impression, not a default sign-off]
-- **Content**: [the takeaway / call-to-action itself, phrased to land]
+- **Closing impact**: Template-preserved formal sign-off only.
+- **Layout**: Use the ending template verbatim.
+- **Content**: None.
 
 ---
 

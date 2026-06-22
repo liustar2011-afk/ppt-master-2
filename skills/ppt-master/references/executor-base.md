@@ -61,11 +61,15 @@ When the project's chosen template is a `mirror` template (`design_spec.md` fron
 
 | Page Type | Corresponding Template | Adherence Rules |
 |-----------|----------------------|-----------------|
-| Cover | `01_cover.svg` | Inherit background, decorative elements, layout structure; replace placeholder content |
+| Cover | `01_cover.svg` | Inherit background, decorative elements and layout structure; use the main-title placeholder only, with no subtitle or added red divider line |
 | Chapter | `02_chapter.svg` | Inherit numbering style, title position, decorative elements |
 | Content | `03_content.svg` | Inherit header/footer styles; **content area may be freely laid out** |
 | Ending | `04_ending.svg` | Inherit background, thank-you message position, contact info layout |
 | TOC | `02_toc.svg` | **Optional**: Inherit TOC title, list styles |
+
+**Hard rule — ending templates are immutable.** When `page_layouts` resolves to any ending template, copy its visible composition verbatim. Do not add a closing thesis, next-step statement, project unit, contact block, decorative line, or any other project-specific content. A content-bearing conclusion belongs on the preceding body page; the ending page exists only to preserve the template's formal closing treatment.
+
+**Hard rule — all cover pages use title-only treatment.** Do not add a subtitle or red divider line. When a cover template is present, preserve its visible style and use only its main-title, author, and date placeholders; when no cover template is present, use one main title plus necessary author/date metadata without a subtitle or red divider line.
 
 ### Page-Template Mapping Declaration (Required Output)
 
@@ -90,6 +94,8 @@ Before the first SVG page, output a confirmation listing: canvas dimensions, bod
 > Long decks drift off the declared palette/icons mid-deck due to context compression. `spec_lock.md` is the canonical execution reference — re-read it per page to bypass model memory.
 
 **Hard rule**: Before generating **each** SVG page, `read_file <project_path>/spec_lock.md`. Use only values from this file, not from memory. If context was auto-compacted, also `read_file <project_path>/design_spec.md` for the current page's §IX brief.
+
+**Mandatory**: Read `analysis/page_contract.json` before generation. Map every current-page `required_refs` and `required_relations` to a visible SVG `<g>` through `data-ref` and `data-role`; see [`content-quality-gate.md`](content-quality-gate.md).
 
 **Per-block expression**: render each `design_spec.md §IX Content` block in its written texture — a full-sentence block as wrapped prose, a fragment/label block as bullets/keywords. **Never split a full-sentence block into a bullet list** — splitting loses the information that the block was continuous reasoning, not a set of parallel points; not because a bullet lays out easier, and not because an inherited template slot is shaped as a list. If a block carries no clear texture, infer the mode from its wording and the page layout.
 
@@ -145,6 +151,32 @@ Before drawing each page, look up its entry in `page_charts` to decide which cha
 - Entry present (e.g., `P09: timeline_horizontal`) → adapt the corresponding chart SVG already in context. Apply project colors/typography/density; do not copy verbatim. Cross-reference `templates/charts/charts_index.json` for the chart's purpose summary if needed.
 - No entry for this page → either no chart on this page, or a chart that didn't match any catalog template (Strategist's `no-template-match` fallback). Design the visualization from scratch using `design_spec.md §VII` for guidance.
 - Whole section absent → no chart pages in this deck.
+
+**Deck-wide chrome — `master_chrome` section (chrome-only brands only)**:
+
+Present only when a `brand_mode: chrome-only` brand was locked at Step 3 (e.g. `templates/brands/中电联公共元素_轻量版/`). The native PPTX exporter reads this section and injects the public elements through a shared slide layout. Ordinary body-page SVGs must reserve the resulting bands but must not redraw the elements.
+
+- **Scope — body pages only, NOT the brand's own cover/ending templates.** Cover/ending pages use their own locked template and are excluded from the shared layout. Body pages inherit the layout automatically on export.
+- Do not draw the top divider, logo, footer bar, organization name, or page number in any body-page SVG. The exporter provides all five through the shared layout; the page number is a layout-owned native `slidenum` field.
+- Never let content enter a listed `protected_region`. Reserve the header and footer bands in the SVG layout; do not create substitute chrome groups.
+- Missing/absent section → no chrome-only brand is locked; generate ordinary SVG pages without layout-injected public elements.
+
+**Body-page title region — `content_regions.body_header_region` (chrome-only brands only)**:
+
+When the locked brand's `templates/brand_rules.json` declares `content_regions.body_header_region`, every ordinary body page must place its page title and subtitle in a top-level `<g id="...-header">` wholly inside that rectangle. This region is a dedicated title band above the brand divider, separate from the main content area and from the top-right logo protection region.
+
+- The title and subtitle must both remain above the divider; the body content begins below the divider according to the brand's `body_pages` region.
+- Keep the title group on the left of the logo protection region. Long titles must reduce size or wrap within the locked header region; they must not extend into the logo area or drop below the divider.
+- The chrome-only brand verifier validates this rule after SVG generation. A missing header group or a title/subtitle bounding box outside the declared region is an error that requires page regeneration.
+
+**Cover/ending region constraint — `cover_regions` section (inverse scope of `master_chrome`)**:
+
+Present only when the locked brand declares dedicated cover placement regions (`spec_lock.md §cover_regions`). This rule applies **only** to the page(s) that inherit the brand's own cover/ending template — i.e. exactly the pages `master_chrome` above excludes:
+
+- Title + subtitle (+ a short credibility tag, if any) must sit inside `title_region`'s box. If the confirmed cover title text doesn't fit at the template's default size, shrink the font rather than letting it spill outside the region or push down into `meta_region`.
+- Author / organization / date must sit inside `meta_region`'s box.
+- This is the most common chrome-only-brand placement mistake: free-designing the cover title position because nothing else in this pipeline constrains it, producing a title that drifts outside the brand's declared safe zone (too high, too low, or wide enough to crowd the logo's protected region from `master_chrome`). Re-check both `title_region` and the `master_chrome` `protected_region` for the logo before finalizing the cover.
+- Missing section → no such brand locked; free design as normal.
 
 ---
 

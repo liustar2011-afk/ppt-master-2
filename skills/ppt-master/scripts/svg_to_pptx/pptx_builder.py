@@ -22,6 +22,7 @@ from pptx import Presentation
 from pptx.util import Emu
 
 from .drawingml_converter import convert_svg_to_slide_shapes
+from .master_chrome import inject_chrome_layout, strip_full_canvas_background
 from .pptx_dimensions import (
     CANVAS_FORMATS,
     get_slide_dimensions, get_pixel_dimensions,
@@ -494,6 +495,8 @@ def create_pptx_with_native_svg(
     merge_paragraphs: bool = True,
     conversion_trace_path: Path | None = None,
     doc_metadata: dict[str, Any] | None = None,
+    master_chrome: dict[str, Any] | None = None,
+    logo_src: Path | None = None,
 ) -> bool:
     """Create a PPTX file with native SVG.
 
@@ -609,6 +612,33 @@ def create_pptx_with_native_svg(
         media_dir = extract_dir / 'ppt' / 'media'
         media_dir.mkdir(exist_ok=True)
 
+        # NOTE on layout wiring: python-pptx's add_slide(layout) above does NOT
+        # control which slideLayout a slide ends up using in this pipeline —
+        # the per-slide .rels file is rebuilt from scratch further down
+        # (hardcoded to slideLayout1.xml) regardless of what add_slide() picked.
+        # So brand chrome is injected directly into slideLayout1.xml (the file
+        # every slide actually references), and excluded pages (cover/ending)
+        # are explicitly rerouted to slideLayout7.xml (python-pptx's untouched
+        # "Blank" layout) at the .rels-rewrite site below — see `slide_num in
+        # excluded_pages`.
+        excluded_pages: set[int] = (master_chrome or {}).get('excluded_pages', set())
+        chrome_layout_partname = '/ppt/slideLayouts/slideLayout1.xml'
+
+        if master_chrome and chrome_layout_partname:
+            master_chrome.setdefault('canvas_width', pixel_width)
+            master_chrome.setdefault('canvas_height', pixel_height)
+            inject_chrome_layout(extract_dir, chrome_layout_partname, master_chrome, logo_src)
+            if logo_src and logo_src.exists():
+                ct_path = extract_dir / '[Content_Types].xml'
+                ct_xml = ct_path.read_text(encoding='utf-8')
+                logo_ext = logo_src.suffix.lstrip('.').lower()
+                logo_content_type = {
+                    'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+                    'gif': 'image/gif', 'bmp': 'image/bmp',
+                }.get(logo_ext, 'image/png')
+                ct_xml = _add_default_content_type(ct_xml, logo_ext, logo_content_type)
+                ct_path.write_text(ct_xml, encoding='utf-8')
+
         prerender_results: dict[int, bool] | None = None
         if not use_native_shapes and use_compat_mode and PNG_RENDERER is not None:
             if workers is None:
@@ -643,13 +673,27 @@ def create_pptx_with_native_svg(
                 # ---- Native shapes mode ----
                 if use_native_shapes:
                     slide_cfg = _slide_config(animation_config, svg_path.stem)
+                    convert_path = svg_path
+                    if master_chrome and slide_num not in excluded_pages:
+                        # This page will use the chrome layout (slideLayout1.xml,
+                        # which already carries its own white background behind
+                        # the chrome — see inject_chrome_layout). Strip this
+                        # page's own full-canvas background rect first, or it
+                        # paints over the layout's chrome (slide content always
+                        # z-orders above its layout in PPTX).
+                        stripped = strip_full_canvas_background(
+                            svg_path.read_text(encoding='utf-8'), pixel_width, pixel_height,
+                        )
+                        convert_path = temp_dir / f'_chrome_stripped_{svg_path.name}'
+                        convert_path.write_text(stripped, encoding='utf-8')
                     slide_xml, media_files_dict, rel_entries, anim_targets = (
                         convert_svg_to_slide_shapes(
-                            svg_path, slide_num=slide_num, verbose=verbose,
+                            convert_path, slide_num=slide_num, verbose=verbose,
                             merge_paragraphs=merge_paragraphs,
                             trace_out=conversion_trace,
                         )
                     )
+
                     slide_transition, slide_transition_duration, slide_auto_advance = (
                         _slide_transition_settings(
                             slide_cfg,
@@ -753,9 +797,13 @@ def create_pptx_with_native_svg(
                             f'Type="{rel["type"]}" Target="{rel["target"]}"/>'
                         )
 
+                    layout_target = 'slideLayout1.xml'
+                    if master_chrome and slide_num in excluded_pages:
+                        layout_target = 'slideLayout7.xml'
+
                     rels_xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>{extra_rels}
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/{layout_target}"/>{extra_rels}
 </Relationships>'''
                     with open(rels_path, 'w', encoding='utf-8') as f:
                         f.write(rels_xml)

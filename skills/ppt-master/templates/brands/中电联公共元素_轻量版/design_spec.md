@@ -53,7 +53,7 @@ Cover generation may use this background as an institutional base plate. It shou
 | `./01_cover.svg` | Brand cover page template | Replace `{{TITLE}}`, `{{SUBTITLE}}`, `{{AUTHOR}}`, and `{{DATE}}` with project-specific text. Keep the cover background, text regions, and local contrast rules. |
 | `./04_ending.svg` | Brand ending page template | Generic formal closing page with `感谢聆听` and `THANK YOU`. Use as the closing page unless the user explicitly requests a content-specific conclusion page. |
 
-These two page templates are borrowed from `templates/brands/中电联公司/` as public cover/ending assets. They are part of the chrome-only brand boundary only for opening and closing pages; they must not lock body-page structure, body color palette, icon style, or chart styling.
+These two page templates are borrowed from `templates/brands/中电联公司_现代能源科技/` as public cover/ending assets. They are part of the chrome-only brand boundary only for opening and closing pages; they must not lock body-page structure, body color palette, icon style, or chart styling.
 
 ## V. Safety Regions
 

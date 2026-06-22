@@ -84,6 +84,20 @@ primary_color: "<HEX>"
 
 **不允许出现**：canvas viewBox、page types、SVG roster——这些是 layout 的职责。
 
+#### Brand 的子模式：chrome-only
+
+`kind: brand` 的一个子模式，frontmatter 额外声明：
+
+```yaml
+brand_mode: chrome-only
+color_policy: visual-style-owned
+primary_color: ""
+```
+
+定位：只锁定"公共版面元素"（页眉分割线、角标 logo、页脚条、机构名、页码等）和安全区，**不**锁内容配色、字体、图标、语调、页面结构——这些仍按正常 Strategist 八项确认走。正文章节也换了一套（不是身份段全集）：I Brand Overview / II Public Chrome Elements / III Safety Regions / IV Assets / V Non-Locked Design Areas / VI Runtime Rule，且必须不带内容色板与字体系统。详细字段表见对应 brand 目录下的 `brands/README.md`。
+
+运行期落地路径：Strategist 在 Step 3 命中 chrome-only 路径后，读该 brand 目录下的 `brand_rules.json`，把其中 `master_elements` + `page_protected_regions` 原样写入 `spec_lock.md §master_chrome`，把 `content_regions.cover_title_region` / `cover_meta_region`（如声明）写入 `§cover_regions`；这两段在 Executor 端的强制读取与逐页重绘规则见 `references/executor-base.md §2.1`——SVG→PPTX 没有 slide-master 合成，所以每个命中该规则的正文页都要重新画一遍 chrome，而不是只画一次。`brands_index.json` 里对应条目额外带 `brand_mode` / `color_policy`，`primary_color` 留空（见下文 §三）。
+
 ### Layout schema
 
 **Frontmatter**
@@ -262,7 +276,7 @@ AI: 你给了两个 brand，检测到段级冲突：
 
 | 用户路径指向 | Step 3 行为（按 kind 分支）|
 |---|---|
-| `kind: brand` | design_spec + 非图片资产 → `<project>/templates/`；logo / 插画 / 图标**位图** → `<project>/images/` |
+| `kind: brand` | design_spec + 非图片资产 → `<project>/templates/`；logo / 插画 / 图标**位图** → `<project>/images/`。`brand_mode: chrome-only` 时额外把 `brand_rules.json` 的 `master_elements` / `page_protected_regions` / cover 安全区写入 `spec_lock.md §master_chrome` / `§cover_regions`（见上文 Brand schema 子模式） |
 | `kind: layout` | design_spec + SVG roster → `<project>/templates/`；**位图**资产 → `<project>/images/` |
 | `kind: deck` | design_spec + 模板 SVG → `<project>/templates/`；logo / 背景 / 其它**位图** → `<project>/images/` |
 | 多路径 | 按上表合成单份 `design_spec.md`；SVG 进 `templates/`、位图进 `images/` 合并复制 |

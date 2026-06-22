@@ -14,7 +14,8 @@ Index entry schemas (the JSON file is the single source of truth — README
 files describe the kind and usage in prose but do **not** enumerate templates;
 discovery happens exclusively against the index file):
 
-- brand:  ``{ summary, primary_color }``
+- brand:  ``{ summary, primary_color }``; chrome-only brands may also include
+  ``brand_mode`` and ``color_policy`` with an empty ``primary_color``
 - layout: ``{ summary, canvas_format, page_count, page_types[] }``
 - deck:   ``{ summary, canvas_format, page_count, primary_color }``
 
@@ -208,13 +209,22 @@ def _extract_entry(kind: str, template_id: str, template_dir: Path) -> dict:
         ) or "").strip()
 
     pages = _list_pages(template_dir)
-    primary_color = fm.get("primary_color") or _extract_primary_color(body) or ""
+    brand_mode = str(fm.get("brand_mode", "") or "")
+    color_policy = str(fm.get("color_policy", "") or "")
+    if kind == "brand" and brand_mode == "chrome-only":
+        primary_color = fm.get("primary_color", "")
+    else:
+        primary_color = fm.get("primary_color") or _extract_primary_color(body) or ""
 
     if kind == "brand":
         entry = OrderedDict(
             summary=summary,
             primary_color=str(primary_color),
         )
+        if brand_mode:
+            entry["brand_mode"] = brand_mode
+        if color_policy:
+            entry["color_policy"] = color_policy
     elif kind == "layout":
         page_types = fm.get("page_types") or _derive_page_types(pages)
         if isinstance(page_types, str):

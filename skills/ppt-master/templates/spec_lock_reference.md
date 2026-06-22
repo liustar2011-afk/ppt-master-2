@@ -99,6 +99,33 @@
 
 > One entry per image file used. Append ` | no-crop` only for images that must not lose pixels (data screenshots, charts, certificates, rendered LaTeX formulas) — Executor will size the container to native ratio and use `preserveAspectRatio="xMidYMid meet"`. Untagged entries default to croppable (`slice`). Remove the section entirely if no images.
 
+## master_chrome
+- top_divider: rect x=0 y=82 w=1280 h=7 fill=#8B0000
+- footer_bar: rect x=0 y=696 w=1280 h=24 fill=#003366
+- logo: image x=1060 y=16 w=189 h=63 href=../images/logo.png
+- footer_org_text: x=40 y=712 size=10 fill=#FFFFFF text="中国电力企业联合会"
+- footer_page_num: x=1240 y=712 size=10 fill=#FFFFFF mono dynamic
+- protected_region: x=1048 y=10 w=220 h=76 (logo — no text/content may enter)
+- protected_region: x=0 y=696 w=1280 h=24 (footer — no text/content may enter)
+
+> **Only present when the locked brand has `brand_mode: chrome-only`** (see that brand's `design_spec.md` frontmatter, e.g. `templates/brands/中电联公共元素_轻量版/`). Strategist copies these rows verbatim from the brand's `brand_rules.json` `master_elements` + `page_protected_regions` at Step 3 dispatch — do not invent geometry, do not round coordinates.
+>
+> **Hard rule — Do NOT draw this section in body-page SVGs.** The native PPTX exporter injects the top divider, logo, footer bar, organization name, and native `slidenum` field through one shared layout. Body SVGs must reserve these bands and keep all normal content out of `protected_region`, but must not recreate any `master_chrome` element. Cover and ending pages are excluded from the shared layout and retain their own locked brand templates.
+>
+> Content (text, charts, images, decoration) must not enter any `protected_region` — these are hard exclusion zones, not soft margins. `page_rhythm` / `page_layouts` choices must leave room for `master_chrome`'s vertical bands (e.g. a `top_divider` at y=82 means the content-start `y` used elsewhere in this file should already clear it; if it doesn't, content overlaps the chrome).
+>
+> **Missing or empty section** → no chrome-only brand is locked; Executor draws nothing extra (normal `kind: brand` identity-only or free-design decks; this is the default case).
+
+## cover_regions
+- title_region: x=260 y=150 w=760 h=186
+- meta_region: x=360 y=430 w=560 h=220
+
+> **Only present when the locked brand declares dedicated cover/ending template regions** (e.g. `templates/brands/中电联公共元素_轻量版/brand_rules.json` `content_regions.cover_title_region` / `cover_meta_region`). Strategist copies these verbatim — do not invent geometry, do not round coordinates.
+>
+> **Hard rule — applies only to the page(s) that inherit the brand's own cover/ending template** (the same pages excluded from `master_chrome` above): the cover's main title must be vertically and horizontally contained within `title_region`; the author/organization/date block must be contained within `meta_region`. Do not add a subtitle, credibility tag, or red divider line. This is the opposite failure mode from `master_chrome`'s scope rule — there, the brand's own template pages are *excluded* from a deck-wide rule; here, the brand's own template pages are the *only* pages a region rule applies to (ordinary content pages have no `cover_regions` constraint — their title placement follows `page_layouts` / free design as usual).
+> - Two-line title: keep both lines' combined bounding box inside `title_region` — if the confirmed title text doesn't fit at the template's default font size, shrink the font (do not let it overflow the region or push into `meta_region`'s 430-start).
+> - **Missing section** → no such brand locked; cover/ending pages (if any) are free design, no region constraint.
+
 ## page_rhythm
 - P01: anchor
 - P02: dense
