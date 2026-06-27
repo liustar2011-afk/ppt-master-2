@@ -369,6 +369,8 @@ guide_end = target_anchor
 
 SVG 渲染器输出一个独立 `<g>`，包含导引路径和方向端部。
 
+组件中间对象可以保留方向端部的局部路径和变换矩阵。面向 PPT Master 的 SVG 渲染默认将平移、旋转和缩放烘焙到绝对路径坐标，避免现有 PPTX 转换器对复合变换的解释与浏览器产生位置偏差。仅在调用方能够完整处理 SVG 仿射变换时，才保留局部路径和 `transform`。
+
 ```svg
 <g id="p05-input-a"
    data-role="arrow-component"
@@ -382,8 +384,8 @@ SVG 渲染器输出一个独立 `<g>`，包含导引路径和方向端部。
         stroke-width="1.4"
         stroke-linecap="round"/>
   <path data-part="terminal"
-        d="M0,-3 C8,-2.8 14,-1.8 22,0 C14,1.8 8,2.8 0,3 L5,0 Z"
-        transform="translate(328 184) rotate(35)"
+        d="M328 181 C334 181.4 339 182.5 346 184
+           C339 185.5 334 186.6 328 187 L333 184 Z"
         fill="#236AA5"/>
 </g>
 ```
